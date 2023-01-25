@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"net/http"
+
+	"power-grid-monitor/core/log"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -25,6 +25,7 @@ type StationState struct {
 	Voltage   float32
 }
 
+const DB_NAME = "sqlite.db"
 const ADDR = ":3000"
 
 var upgrader = websocket.Upgrader{
@@ -32,9 +33,9 @@ var upgrader = websocket.Upgrader{
 }
 
 func main() {
-	db, err := gorm.Open("sqlite3", "sqlite.db")
+	db, err := gorm.Open("sqlite3", DB_NAME)
 	if err != nil {
-		fmt.Println(err)
+		log.PrintErr(err)
 		return
 	}
 
@@ -46,14 +47,14 @@ func main() {
 	router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			log.Println("Failed to set websocket upgrade:", err)
+			log.PrintErr(err)
 			return
 		}
 
 		for {
 			_, msg, err := conn.ReadMessage()
 			if err != nil {
-				log.Println("Failed to read message:", err)
+				log.PrintErr(err)
 				break
 			}
 
@@ -64,17 +65,17 @@ func main() {
 	})
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./public")))
 
-	log.Printf("Starting server on %s\n", ADDR)
-	log.Fatal(http.ListenAndServe(ADDR, router))
+	log.PrintConsole(log.INFO, "Starting server on %s", ADDR)
+	log.PanicErr(http.ListenAndServe(ADDR, router))
 }
 
 func wsHandler(conn *websocket.Conn, msg []byte) error {
 
-	// log.Printf("Received message: %s", msg)
+	log.PrintConsole(log.INFO, "Received message: %s", msg)
 
-	// err := conn.WriteMessage(websocket.TextMessage, msg)
-	// if err != nil {
-	// 	log.Println("Failed to write message:", err)
-	// }
+	err := conn.WriteMessage(websocket.TextMessage, msg)
+	if err != nil {
+		log.PrintConsole(log.ERR, "Failed to write message: %s", err)
+	}
 	return nil
 }
