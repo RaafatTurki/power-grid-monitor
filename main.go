@@ -3,10 +3,10 @@ package main
 import (
 	"net/http"
 
-	"power-grid-monitor/core/log"
+	"power-grid-monitor/core/ws"
+	"power-grid-monitor/lib/log"
 
 	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -28,10 +28,6 @@ type StationState struct {
 const DB_NAME = "sqlite.db"
 const ADDR = ":3000"
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool { return true },
-}
-
 func main() {
 	db, err := gorm.Open(sqlite.Open(DB_NAME), &gorm.Config{})
 	if err != nil {
@@ -43,38 +39,9 @@ func main() {
 	db.AutoMigrate(&StationState{})
 
 	router := mux.NewRouter()
-	router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		conn, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			log.PrintErr(err)
-			return
-		}
-
-		for {
-			_, msg, err := conn.ReadMessage()
-			if err != nil {
-				log.PrintErr(err)
-				break
-			}
-
-			if wsHandler(conn, msg) != nil {
-				break
-			}
-		}
-	})
+	router.HandleFunc("/ws", ws.WSHTTPHandler)
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./public")))
 
 	log.PrintConsole(log.INFO, "Starting server on %s", ADDR)
 	log.PanicErr(http.ListenAndServe(ADDR, router))
-}
-
-func wsHandler(conn *websocket.Conn, msg []byte) error {
-
-	log.PrintConsole(log.INFO, "Received message: %s", msg)
-
-	err := conn.WriteMessage(websocket.TextMessage, msg)
-	if err != nil {
-		log.PrintConsole(log.ERR, "Failed to write message: %s", err)
-	}
-	return nil
 }
