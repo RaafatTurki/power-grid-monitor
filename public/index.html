@@ -3,9 +3,21 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
-    <title>Sample</title>
+    <title>Title</title>
   </head>
   <body>
-    :D
+    <h1>Hi!</h1>
+
+    Connect your websocket client using the following url:
+    <br/>
+    <br/>
+    <code id='ws-url'>hi friend</code>
+
+    <script>
+    const ws_url = window.location.href.replace('http', 'ws') + 'ws'
+    let el_ws_url = document.getElementById('ws-url')
+    el_ws_url.innerHTML = ws_url
+    console.log(ws_url)
+    </script>
   </body>
 </html>
