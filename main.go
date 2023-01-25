@@ -7,8 +7,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 type Station struct {
@@ -33,13 +33,12 @@ var upgrader = websocket.Upgrader{
 }
 
 func main() {
-	db, err := gorm.Open("sqlite3", DB_NAME)
+	db, err := gorm.Open(sqlite.Open(DB_NAME), &gorm.Config{})
 	if err != nil {
 		log.PrintErr(err)
 		return
 	}
 
-	defer db.Close()
 	db.AutoMigrate(&Station{})
 	db.AutoMigrate(&StationState{})
 
