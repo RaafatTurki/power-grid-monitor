@@ -20,6 +20,7 @@ type Station struct {
 type StationState struct {
 	gorm.Model
 	StationID uint `gorm:"foreignkey:StationID;association_foreignkey:ID"`
+	State     bool
 	Temp      float32
 	Current   float32
 	Voltage   float32
