@@ -7,6 +7,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const DB_NAME = "sqlite.db"
+
 type Station struct {
 	ID  uint `gorm:"primary_key"`
 	Lon float32

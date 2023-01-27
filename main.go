@@ -10,11 +10,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const DB_NAME = "sqlite.db"
 const ADDR = ":3000"
 
 func main() {
-	db := database.DBConnect(DB_NAME)
+	db := database.DBConnect(database.DB_NAME)
 	database.DBMigrate(db)
 
 	router := mux.NewRouter()
