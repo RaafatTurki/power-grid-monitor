@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-const maxLogLevel = INFO
+const maxLogLevel = DEBUG
 
 const (
 	red     = "\033[97;41m"
