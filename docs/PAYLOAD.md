@@ -76,17 +76,32 @@ schema:
 unreg:
 ```
 
-#### Feed
+#### FeedG
+`Server -> Frontend`
+
+This method is used to feed new station geo data to the frontend
+```
+schema:
+feedg:id,lon,lat
+
+types:
+feedg:uint,float,float
+
+example:
+feedg:42,33.0,44.0
+```
+
+#### FeedD
 `Server -> Frontend`
 
 This method is used to feed new station data to the frontend
 ```
 schema:
-feed:id,state,voltage,current,temp,lon,lat
+feedd:id,state,voltage,current,temp,lon,lat
 
 types:
-feed:uint,uint,float,float,float,float,float
+feedd:uint,uint,float,float,float,float,float
 
 example:
-feed:42,1,1.0,2.0,3.0,33.0,44.0
+feedd:42,1,1.0,2.0,3.0,33.0,44.0
 ```

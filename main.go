@@ -17,9 +17,9 @@ func main() {
 	database.DBMigrate(db)
 
 	router := mux.NewRouter()
-	router.HandleFunc("/ws", ws.WSHTTPHandler)
+	router.HandleFunc("/ws", ws.HTTPWSHandler)
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./public")))
 
-	log.PrintConsole(log.INFO, "Starting server on %s", ADDR)
+	log.PrintConsole(log.INFO, "server started on port %s", ADDR)
 	log.PanicErr(http.ListenAndServe(ADDR, router))
 }

@@ -13,12 +13,12 @@ func StationUpdateGeolocation(id uint, lon float32, lat float32) error {
 	if err != nil {
 		return err
 	} else {
-		log.PrintConsole(log.DEBUG, "Updating geolocation")
+		log.PrintConsole(log.DEBUG, "station geolocation updated")
 		return nil
 	}
 }
 
-func StationInsertData(id uint, state bool, voltage float32, current float32, temp float32) error {
+func StationStateInsertData(id uint, state bool, voltage float32, current float32, temp float32) error {
 	stationState := StationState{
 		StationID: id,
 		State:     state,
@@ -31,7 +31,7 @@ func StationInsertData(id uint, state bool, voltage float32, current float32, te
 	if err != nil {
 		return err
 	} else {
-		log.PrintConsole(log.DEBUG, "Inserting Data")
+		log.PrintConsole(log.DEBUG, "station state data inserted")
 		return nil
 	}
 }
