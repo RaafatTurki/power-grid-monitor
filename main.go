@@ -18,7 +18,7 @@ func main() {
 
 	router := mux.NewRouter()
 	router.HandleFunc("/ws", ws.HTTPWSHandler)
-	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./public")))
+	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./web_front/build/")))
 
 	log.PrintConsole(log.INFO, "server started on port %s", ADDR)
 	log.PanicErr(http.ListenAndServe(ADDR, router))
