@@ -17,6 +17,35 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
+var connsClients = []*websocket.Conn{}
+
+func isClientRegistered(conn *websocket.Conn) bool {
+	for _, connClient := range connsClients {
+		if connClient.RemoteAddr() == conn.RemoteAddr() {
+			return true
+		}
+	}
+	return false
+}
+
+func registerClient(conn *websocket.Conn) error {
+	connsClients = append(connsClients, conn)
+	return nil
+}
+
+func unregisterClient(conn *websocket.Conn) error {
+	connsClientsTemp := []*websocket.Conn{}
+
+	for _, connClient := range connsClients {
+		if connClient.RemoteAddr() != conn.RemoteAddr() {
+			connsClientsTemp = append(connsClientsTemp, connClient)
+		}
+	}
+
+	connsClients = connsClientsTemp
+	return nil
+}
+
 func WSHTTPHandler(w http.ResponseWriter, r *http.Request) {
 	// upgrade the http request to a ws connection
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -56,7 +85,25 @@ func WSHandler(conn *websocket.Conn, msgBytes []byte) error {
 	switch msgType {
 	case "":
 		return errors.New(fmt.Sprintf("No msg type: \"%s\"", msg))
-	case "g":
+	case "reg":
+		if isClientRegistered(conn) {
+			conn.WriteMessage(websocket.TextMessage, []byte("Client already registered"))
+			log.PrintConsole(log.DEBUG, fmt.Sprintf("Re-registering client attempt: %s", conn.RemoteAddr().String()))
+		} else {
+			registerClient(conn)
+			conn.WriteMessage(websocket.TextMessage, []byte("Registered client"))
+			log.PrintConsole(log.DEBUG, fmt.Sprintf("Registering client: %s", conn.RemoteAddr().String()))
+		}
+	case "unreg":
+		if isClientRegistered(conn) {
+			unregisterClient(conn)
+			conn.WriteMessage(websocket.TextMessage, []byte("Unregistered client"))
+			log.PrintConsole(log.DEBUG, fmt.Sprintf("Unregistering client: %s", conn.RemoteAddr().String()))
+		} else {
+			conn.WriteMessage(websocket.TextMessage, []byte("Client already unregistered"))
+			log.PrintConsole(log.DEBUG, fmt.Sprintf("Unregistering unregistered client attempt: %s", conn.RemoteAddr().String()))
+		}
+	case "geo":
 		if len(msgArgs) != 3 {
 			return errors.New(fmt.Sprintf("Wrong number of msg args: %s", msg))
 		}
@@ -70,21 +117,28 @@ func WSHandler(conn *websocket.Conn, msgBytes []byte) error {
 		if err != nil {
 			return err
 		}
-	case "d":
+	case "dat":
 		if len(msgArgs) != 5 {
 			return errors.New(fmt.Sprintf("Wrong number of msg args: %s", msg))
 		}
-		id, err_id := strconv.ParseUint(msgArgs[0], 10, 32)
-		state, err_state := strconv.ParseUint(msgArgs[1], 10, 32)
-		voltage, err_voltage := strconv.ParseFloat(msgArgs[2], 32)
-		current, err_current := strconv.ParseFloat(msgArgs[3], 32)
-		temp, err_temp := strconv.ParseFloat(msgArgs[4], 32)
-		if err_id != nil || err_state != nil || err_voltage != nil || err_current != nil || err_temp != nil || (state != 0 && state != 1) {
+		id_uint64, err_id := strconv.ParseUint(msgArgs[0], 10, 32)
+		state_uint64, err_state := strconv.ParseUint(msgArgs[1], 10, 32)
+		voltage_f64, err_voltage := strconv.ParseFloat(msgArgs[2], 32)
+		current_f64, err_current := strconv.ParseFloat(msgArgs[3], 32)
+		temp_f64, err_temp := strconv.ParseFloat(msgArgs[4], 32)
+		if err_id != nil || err_state != nil || err_voltage != nil || err_current != nil || err_temp != nil || (state_uint64 != 0 && state_uint64 != 1) {
 			return errors.New(fmt.Sprintf("Invalid msg args: %s", msg))
 		}
-		err := service.StationInsertData(uint(id), state != 0, float32(voltage), float32(current), float32(temp))
+		id := uint(id_uint64)
+		voltage := float32(voltage_f64)
+		current := float32(current_f64)
+		temp := float32(temp_f64)
+		err := service.StationInsertData(id, state_uint64 != 0, voltage, current, temp)
 		if err != nil {
 			return err
+		}
+		for _, connClient := range connsClients {
+			connClient.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("f:%d,%d,%f,%f,%f", id, state_uint64, voltage, current, temp)))
 		}
 	default:
 		return errors.New(fmt.Sprintf("Invalid msg type: \"%s\"", msg))
