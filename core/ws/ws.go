@@ -18,9 +18,10 @@ var upgrader = websocket.Upgrader{
 }
 
 var registeredClientConns = []*websocket.Conn{}
+var registeredStationConns = []*websocket.Conn{}
 
-func isClientRegistered(conn *websocket.Conn) bool {
-	for _, connClient := range registeredClientConns {
+func isClientRegistered(conn *websocket.Conn, connsArr []*websocket.Conn) bool {
+	for _, connClient := range connsArr {
 		if connClient.RemoteAddr() == conn.RemoteAddr() {
 			return true
 		}
@@ -28,21 +29,21 @@ func isClientRegistered(conn *websocket.Conn) bool {
 	return false
 }
 
-func registerClient(conn *websocket.Conn) error {
-	if !isClientRegistered(conn) {
-		registeredClientConns = append(registeredClientConns, conn)
+func registerClient(conn *websocket.Conn, connsArr []*websocket.Conn) ([]*websocket.Conn, error) {
+	if !isClientRegistered(conn, connsArr) {
+		connsArr = append(connsArr, conn)
 		log.PrintConsole(log.INFO, fmt.Sprintf("client registered: %s", conn.RemoteAddr().String()))
-		return nil
+		return connsArr, nil
 	} else {
-		return errors.New(fmt.Sprintf("client already registered: %s", conn.RemoteAddr().String()))
+		return nil, errors.New(fmt.Sprintf("client already registered: %s", conn.RemoteAddr().String()))
 	}
 }
 
-func unregisterClient(conn *websocket.Conn) error {
+func unregisterClient(conn *websocket.Conn, connsArr []*websocket.Conn) ([]*websocket.Conn, error) {
 	connsClientsTemp := []*websocket.Conn{}
 	isDone := false
 
-	for _, registeredConn := range registeredClientConns {
+	for _, registeredConn := range connsArr {
 		if registeredConn.RemoteAddr() != conn.RemoteAddr() {
 			connsClientsTemp = append(connsClientsTemp, registeredConn)
 		} else {
@@ -51,11 +52,11 @@ func unregisterClient(conn *websocket.Conn) error {
 	}
 
 	if isDone {
-		registeredClientConns = connsClientsTemp
+		connsArr = connsClientsTemp
 		log.PrintConsole(log.INFO, fmt.Sprintf("client unregistered: %s", conn.RemoteAddr().String()))
-		return nil
+		return connsArr, nil
 	} else {
-		return errors.New(fmt.Sprintf("client already unregistered: %s", conn.RemoteAddr().String()))
+		return nil, errors.New(fmt.Sprintf("client already unregistered: %s", conn.RemoteAddr().String()))
 	}
 }
 
@@ -114,25 +115,65 @@ func connHandler(conn *websocket.Conn, msgBytes []byte) error {
 		return msgHandlerGeo(conn, msgArgs)
 	case "dat":
 		return msgHandlerDat(conn, msgArgs)
+	case "pwr":
+		return msgHandlerPwr(conn, msgArgs)
 	default:
 		return errors.New(fmt.Sprintf("invalid msg type: \"%s\"", msgType))
 	}
 }
 
 func msgHandlerReg(conn *websocket.Conn, msgArgs []string) error {
-	err := registerClient(conn)
-	if err != nil {
-		conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
+	if len(msgArgs) != 1 {
+		return errors.New(fmt.Sprintf("wrong number of msg args: %s", msgArgs))
 	}
-	return err
+
+	switch msgArgs[0] {
+	case "":
+		return errors.New(fmt.Sprintf("empty registration type"))
+	case "c":
+		connsArr, err := registerClient(conn, registeredClientConns)
+		if err != nil {
+			conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
+		}
+		registeredClientConns = connsArr
+		return err
+	case "s":
+		connsArr, err := registerClient(conn, registeredStationConns)
+		if err != nil {
+			conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
+		}
+		registeredStationConns = connsArr
+		return err
+	default:
+		return errors.New(fmt.Sprintf("invalid registration type"))
+	}
 }
 
 func msgHandlerUnreg(conn *websocket.Conn, msgArgs []string) error {
-	err := unregisterClient(conn)
-	if err != nil {
-		conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
+	if len(msgArgs) != 1 {
+		return errors.New(fmt.Sprintf("wrong number of msg args: %s", msgArgs))
 	}
-	return err
+
+	switch msgArgs[0] {
+	case "":
+		return errors.New(fmt.Sprintf("empty registration type"))
+	case "c":
+		connsArr, err := unregisterClient(conn, registeredClientConns)
+		if err != nil {
+			conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
+		}
+		registeredClientConns = connsArr
+		return err
+	case "s":
+		connsArr, err := unregisterClient(conn, registeredStationConns)
+		if err != nil {
+			conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
+		}
+		registeredClientConns = connsArr
+		return err
+	default:
+		return errors.New(fmt.Sprintf("invalid registration type"))
+	}
 }
 
 func msgHandlerGeo(conn *websocket.Conn, msgArgs []string) error {
@@ -146,14 +187,14 @@ func msgHandlerGeo(conn *websocket.Conn, msgArgs []string) error {
 		return errors.New(fmt.Sprintf("invalid msg args: %s", msgArgs))
 	}
 	err := service.StationUpdateGeolocation(uint(id), float32(lat), float32(lon))
-  if err != nil {
-    return err
-  } else {
+	if err != nil {
+		return err
+	} else {
 		for _, connClient := range registeredClientConns {
-      connClient.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("feedg:%d,%f,%f", id, lon, lat)))
+			connClient.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("geo:%d,%f,%f", id, lon, lat)))
 		}
-    return nil
-  }
+		return nil
+	}
 }
 
 func msgHandlerDat(conn *websocket.Conn, msgArgs []string) error {
@@ -181,8 +222,26 @@ func msgHandlerDat(conn *websocket.Conn, msgArgs []string) error {
 		return err
 	} else {
 		for _, connClient := range registeredClientConns {
-      connClient.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("feedd:%d,%d,%f,%f,%f", id, state_uint64, voltage, current, temp)))
+			connClient.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("dat:%d,%d,%f,%f,%f", id, state_uint64, voltage, current, temp)))
 		}
 		return nil
 	}
+}
+
+func msgHandlerPwr(conn *websocket.Conn, msgArgs []string) error {
+	if len(msgArgs) != 2 {
+		return errors.New(fmt.Sprintf("wrong number of msg args: %s", msgArgs))
+	}
+
+	id_uint64, err_id := strconv.ParseUint(msgArgs[0], 10, 32)
+	state_uint64, err_state := strconv.ParseUint(msgArgs[1], 10, 32)
+
+	if err_state != nil || err_id != nil {
+		return errors.New(fmt.Sprintf("invalid msg args: %s", msgArgs))
+	}
+
+	for _, connStation := range registeredStationConns {
+		connStation.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("pwr:%d,%d", id_uint64, state_uint64)))
+	}
+	return nil
 }

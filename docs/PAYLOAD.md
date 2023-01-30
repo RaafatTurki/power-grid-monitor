@@ -1,7 +1,5 @@
 # Payload Schema
 
-## Server <-> Arduino
-
 WS Payloads are byte arrays, our payloads will be of the shape
 ```
 METHOD:VALUE,VALUE,VALUE,...
@@ -43,6 +41,7 @@ The `state` parameter can either be a `0` (off) or a `1` (on)
 
 #### Power
 `Server -> Arduino`
+`Frontend -> Server`
 
 This method is used to control the power state of any given station
 ```
@@ -57,51 +56,33 @@ pow:42,1
 ```
 The `state` parameter can either be a `0` (off) or a `1` (on)
 
-## Server <-> Frontend
-
 #### Register
 `Frontend -> Server`
+`Arduino -> Server`
 
-This method is used to register frontend for new feed data
+This method is used to register clients/stations
 ```
 schema:
-reg:
+reg:type
+
+types:
+reg:char
+
+example:
+reg:c
 ```
 
 `Frontend -> Server`
+`Arduino -> Server`
 
-This method is used to unregister frontend for new feed data
+This method is used to unregister clients/stations
 ```
 schema:
-unreg:
-```
-
-#### FeedG
-`Server -> Frontend`
-
-This method is used to feed new station geo data to the frontend
-```
-schema:
-feedg:id,lon,lat
+unreg:type
 
 types:
-feedg:uint,float,float
+unreg:char
 
 example:
-feedg:42,33.0,44.0
-```
-
-#### FeedD
-`Server -> Frontend`
-
-This method is used to feed new station data to the frontend
-```
-schema:
-feedd:id,state,voltage,current,temp,lon,lat
-
-types:
-feedd:uint,uint,float,float,float,float,float
-
-example:
-feedd:42,1,1.0,2.0,3.0,33.0,44.0
+unreg:c
 ```
