@@ -1,9 +1,11 @@
 import { writable, type Writable } from 'svelte/store'
 
+const BACKEND_WS_URL = 'wss://power-grid-monitor.potatolord2.repl.co/ws'
+
 const stations: Writable<Map<number, number[]>> = writable(new Map())
 const stations_state: Writable<Map<number, number[]>> = writable(new Map())
 
-const socket = new WebSocket('ws://localhost:3000/ws')
+const socket = new WebSocket(BACKEND_WS_URL)
 
 function msg_handler_dat(msg_args: string[]) {
   if (msg_args.length != 5) return
