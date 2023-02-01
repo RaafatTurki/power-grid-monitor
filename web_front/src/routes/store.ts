@@ -1,12 +1,14 @@
 import { writable, type Writable } from 'svelte/store'
 
-// const BACKEND_WS_URL = 'wss://power-grid-monitor.potatolord2.repl.co/ws'
-const BACKEND_URL = 'localhost:3000'
+const WS_URL = 'wss://power-grid-monitor.potatolord2.repl.co'
+const HTTP_URL = 'https://power-grid-monitor.potatolord2.repl.co'
+// const WS_URL = 'ws://localhost:3000/ws'
+// const HTTP_URL = 'http://localhost:3000'
 
 const stations: Writable<Map<number, number[]>> = writable(new Map())
 const stations_state: Writable<Map<number, number[]>> = writable(new Map())
 
-const socket = new WebSocket(`ws://${BACKEND_URL}/ws`)
+const socket = new WebSocket(`${WS_URL}/ws`)
 
 function msg_handler_dat(msg_args: string[]) {
   if (msg_args.length != 5) return
@@ -43,7 +45,7 @@ function msg_handler_regen(msg_args: string[]) {
   
   var link = document.createElement('a')
   link.download = "datasheet.xlsx"
-  link.href = `http://${BACKEND_URL}/datasheet.xlsx`
+  link.href = `${HTTP_URL}/datasheet.xlsx`
   link.click()
 }
 
