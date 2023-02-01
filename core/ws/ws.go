@@ -32,10 +32,10 @@ func isClientRegistered(conn *websocket.Conn, connsArr []*websocket.Conn) bool {
 func registerClient(conn *websocket.Conn, connsArr []*websocket.Conn) ([]*websocket.Conn, error) {
 	if !isClientRegistered(conn, connsArr) {
 		connsArr = append(connsArr, conn)
-		log.PrintConsole(log.INFO, fmt.Sprintf("client registered: %s", conn.RemoteAddr().String()))
+		log.PrintConsole(log.INFO, fmt.Sprintf("registered: %s", conn.RemoteAddr().String()))
 		return connsArr, nil
 	} else {
-		return nil, errors.New(fmt.Sprintf("client already registered: %s", conn.RemoteAddr().String()))
+		return nil, errors.New(fmt.Sprintf("already registered: %s", conn.RemoteAddr().String()))
 	}
 }
 
@@ -53,10 +53,10 @@ func unregisterClient(conn *websocket.Conn, connsArr []*websocket.Conn) ([]*webs
 
 	if isDone {
 		connsArr = connsClientsTemp
-		log.PrintConsole(log.INFO, fmt.Sprintf("client unregistered: %s", conn.RemoteAddr().String()))
+		log.PrintConsole(log.INFO, fmt.Sprintf("unregistered: %s", conn.RemoteAddr().String()))
 		return connsArr, nil
 	} else {
-		return nil, errors.New(fmt.Sprintf("client already unregistered: %s", conn.RemoteAddr().String()))
+		return nil, errors.New(fmt.Sprintf("already unregistered: %s", conn.RemoteAddr().String()))
 	}
 }
 
@@ -117,6 +117,8 @@ func connHandler(conn *websocket.Conn, msgBytes []byte) error {
 		return msgHandlerDat(conn, msgArgs)
 	case "pwr":
 		return msgHandlerPwr(conn, msgArgs)
+	case "regen":
+		return msgHandlerRegen(conn, msgArgs)
 	default:
 		return errors.New(fmt.Sprintf("invalid msg type: \"%s\"", msgType))
 	}
@@ -243,5 +245,12 @@ func msgHandlerPwr(conn *websocket.Conn, msgArgs []string) error {
 	for _, connStation := range registeredStationConns {
 		connStation.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("pwr:%d,%d", id_uint64, state_uint64)))
 	}
+	return nil
+}
+
+func msgHandlerRegen(conn *websocket.Conn, msgArgs []string) error {
+	// service.RegenStateDataFile(1000, "./public/datasheet.xlsx")
+	service.RegenStateDataFile(1000, "./web_front/build/datasheet.xlsx")
+  conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("regen:done")))
 	return nil
 }

@@ -17,8 +17,17 @@
   function on_power_btn_click(id: number, state: number) {
     store.socket_send(`pwr:${id},${state == 0 ? 1 : 0}`)
   }
+
+  function on_download_btn_click() {
+    store.socket_send(`regen:`)
+  }
 </script>
 
+<button
+  on:click={() => { on_download_btn_click() }}>
+  Download Datasheet
+  <span class="i-material-symbols-download">kk</span>
+</button>
 
 <table>
   <tr>
@@ -31,10 +40,8 @@
   </tr>
 
   {#each [...$stations_state] as station_state}
-        {@const id = station_state[0]}
-        {@const dat = station_state[1]}
-        <!-- <p>{id}</p> -->
-        <!-- <p>{dat}</p> -->
+    {@const id = station_state[0]}
+    {@const dat = station_state[1]}
     <tr>
       <td>{id}</td>
       {#each dat as d, i}

@@ -1,11 +1,12 @@
 import { writable, type Writable } from 'svelte/store'
 
-const BACKEND_WS_URL = 'wss://power-grid-monitor.potatolord2.repl.co/ws'
+// const BACKEND_WS_URL = 'wss://power-grid-monitor.potatolord2.repl.co/ws'
+const BACKEND_URL = 'localhost:3000'
 
 const stations: Writable<Map<number, number[]>> = writable(new Map())
 const stations_state: Writable<Map<number, number[]>> = writable(new Map())
 
-const socket = new WebSocket(BACKEND_WS_URL)
+const socket = new WebSocket(`ws://${BACKEND_URL}/ws`)
 
 function msg_handler_dat(msg_args: string[]) {
   if (msg_args.length != 5) return
@@ -36,6 +37,16 @@ function msg_handler_geo(msg_args: string[]) {
   stations.update(obj => obj.set(id, geo))
 }
 
+function msg_handler_regen(msg_args: string[]) {
+  if (msg_args.length != 1) return
+  if (msg_args[0] != "done") return
+  
+  var link = document.createElement('a')
+  link.download = "datasheet.xlsx"
+  link.href = `http://${BACKEND_URL}/datasheet.xlsx`
+  link.click()
+}
+
 function parse_ws_msg(msg: string) {
   let msg_arr = msg.split(':')
   if (msg_arr.length != 2) return
@@ -49,6 +60,9 @@ function parse_ws_msg(msg: string) {
     break;
     case "geo":
       msg_handler_geo(msg_args)
+    break;
+    case "regen":
+      msg_handler_regen(msg_args)
     break;
     default:
       console.error(`unknown msg_type ${msg_type}`)
@@ -65,11 +79,6 @@ socket.addEventListener('message', (e) => {
   // messageStore.set(e.data)
 })
 
-// const sendMessage = (message: string) => {
-//   if (socket.readyState <= 1) {
-//     socket.send(message);
-//   }
-// }
 
 function socket_send(msg: string) {
   socket.send(msg)

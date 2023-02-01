@@ -86,3 +86,18 @@ unreg:char
 example:
 unreg:c
 ```
+
+#### Regen
+
+`Frontend -> Server`
+`Server -> Frontend`
+
+This method is used to tell the server to regen the data file
+```
+schema:
+regen:
+
+example:
+regen:
+```
+When the server uses this method, a single argument of `done` is used

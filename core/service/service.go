@@ -2,6 +2,7 @@ package service
 
 import (
 	. "power-grid-monitor/core/database"
+	"power-grid-monitor/core/excel"
 	"power-grid-monitor/lib/log"
 )
 
@@ -35,3 +36,23 @@ func StationStateInsertData(id uint, state bool, voltage float32, current float3
 		return nil
 	}
 }
+
+func RegenStateDataFile(count int, path string) {
+	file, main_sheet_name := excel.CreateFile()
+
+	var station_states []StationState
+	db.Order("created_at desc").Limit(count).Find(&station_states)
+
+	for i, ss := range station_states {
+    var state_uint uint = 0
+    if ss.State {
+      state_uint = 1
+    }
+
+		file = excel.AddStationStateRow(file, main_sheet_name, i+1, ss.StationID, state_uint, ss.Voltage, ss.Current, ss.Temp)
+	}
+
+	err := file.SaveAs(path)
+	log.PrintErr(err)
+}
+
