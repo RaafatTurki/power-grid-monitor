@@ -1,6 +1,7 @@
 { pkgs }: {
     deps = [
         pkgs.go
-        pkgs.gopls
+        pkgs.nodejs
+        pkgs.nodePackages_latest.pnpm
     ];
 }
