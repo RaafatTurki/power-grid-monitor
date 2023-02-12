@@ -46,13 +46,13 @@ The `state` parameter can either be a `0` (off) or a `1` (on)
 This method is used to control the power state of any given station
 ```
 schema:
-pow:id,state
+pwr:id,state
 
 types:
-pow:uint,uint
+pwr:uint,uint
 
 example:
-pow:42,1
+pwr:42,1
 ```
 The `state` parameter can either be a `0` (off) or a `1` (on)
 
