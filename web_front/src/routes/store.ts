@@ -2,7 +2,7 @@ import { writable, type Writable } from 'svelte/store'
 
 const WS_URL = 'wss://power-grid-monitor.potatolord2.repl.co'
 const HTTP_URL = 'https://power-grid-monitor.potatolord2.repl.co'
-// const WS_URL = 'ws://localhost:3000/ws'
+// const WS_URL = 'ws://localhost:3000'
 // const HTTP_URL = 'http://localhost:3000'
 
 const stations: Writable<Map<number, number[]>> = writable(new Map())
@@ -14,9 +14,9 @@ function msg_handler_dat(msg_args: string[]) {
   if (msg_args.length != 5) return
   let id = Number(msg_args[0])
   let state = Number(msg_args[1])
-  let voltage = Number(msg_args[2])
-  let current = Number(msg_args[3])
-  let temp = Number(msg_args[4])
+  let voltage = Number(Number(msg_args[2]).toFixed(3))
+  let current = Number(Number(msg_args[3]).toFixed(3))
+  let temp = Number(Number(msg_args[4]).toFixed(3))
 
   if (isNaN(id) || isNaN(state) || isNaN(voltage) || isNaN(current) || isNaN(temp)) return
   if (state !== 1 && state !== 0) return
@@ -29,8 +29,8 @@ function msg_handler_dat(msg_args: string[]) {
 function msg_handler_geo(msg_args: string[]) {
   if (msg_args.length != 3) return
   let id = Number(msg_args[0])
-  let lon = Number(msg_args[1])
-  let lat = Number(msg_args[2])
+  let lon = Number(Number(msg_args[1]).toFixed(5))
+  let lat = Number(Number(msg_args[2]).toFixed(5))
 
   if (isNaN(id) || isNaN(lon) || isNaN(lat)) return
 

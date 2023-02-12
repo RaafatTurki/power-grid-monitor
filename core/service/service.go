@@ -43,13 +43,15 @@ func RegenStateDataFile(count int, path string) {
 	var station_states []StationState
 	db.Order("created_at desc").Limit(count).Find(&station_states)
 
+  excel.AddTitlesRow(file, main_sheet_name, 1, []string{"ID", "State", "Voltage", "Current", "Temprature", "Date", "Timestamp (ms)"})
+
 	for i, ss := range station_states {
     var state_uint uint = 0
     if ss.State {
       state_uint = 1
     }
-
-		file = excel.AddStationStateRow(file, main_sheet_name, i+1, ss.StationID, state_uint, ss.Voltage, ss.Current, ss.Temp)
+    // i+2 bcause excel files are 1 indexed and because the 1st row is reserved for titles
+		excel.AddStationStateRow(file, main_sheet_name, i+2, ss.StationID, state_uint, ss.Voltage, ss.Current, ss.Temp, ss.CreatedAt)
 	}
 
 	err := file.SaveAs(path)

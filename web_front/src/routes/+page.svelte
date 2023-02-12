@@ -5,13 +5,13 @@
   let stations_state = store.stations_state
 
   let column_data = [
-    { title: "ID", icon: 'i-tabler-hash' },
-    { title: "Power", icon: 'i-ic-round-power-settings-new' },
-    { title: "Voltage", icon: 'i-tabler-circuit-voltmeter' },
-    { title: "Current", icon: 'i-tabler-circuit-ammeter' },
-    { title: "Temp", icon: 'i-tabler-temperature' },
-    { title: "Lon", icon: 'i-mdi-longitude' },
-    { title: "Lat", icon: 'i-mdi-latitude' },
+    { title: "ID",      unit: '',     icon: 'i-tabler-hash' },
+    { title: "Power",   unit: '',     icon: 'i-ic-round-power-settings-new' },
+    { title: "Voltage", unit: 'v',    icon: 'i-tabler-circuit-voltmeter' },
+    { title: "Current", unit: ' amp', icon: 'i-tabler-circuit-ammeter' },
+    { title: "Temp",    unit: '°',    icon: 'i-tabler-temperature' },
+    { title: "Lon",     unit: '',     icon: 'i-mdi-longitude' },
+    { title: "Lat",     unit: '',     icon: 'i-mdi-latitude' },
   ]
 
   function on_power_btn_click(id: number, state: number) {
@@ -54,7 +54,7 @@
             </button>
           </td>
         {:else}
-          <td>{d}</td>
+          <td>{d}{column_data[i+1].unit}</td>
         {/if}
       {/each}
 
